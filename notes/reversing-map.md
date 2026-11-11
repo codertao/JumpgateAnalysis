@@ -11,6 +11,17 @@ PE32 x86, image base `0x400000`. Addresses are virtual addresses in this build.
 | .data | `0xb1e000` | globals |
 | .NewIT | `0x150a000`+ | appended import stubs for Msb32 (GetIP/Login/Tick/catchPacket at IAT `0x150e147..0x150e153`) |
 
+## Code layout by library  [static, 2026-11-11]
+Built with MSVC 7.1 (VS2003, linker 7.10). Bands, see `functions.csv`:
+| VA range | Contents |
+|---|---|
+| `0x401000–0x4ba66b` | game code, then the ~30 static-world region-init fns (`0x4aeed0`…, 5.9 MB) |
+| `…–0xa62000` | more game code (message layer `0x9c…–0x9d…`, UI, model loaders) |
+| `0xa62000–0xa64000` | game network wrapper (State/Space connections, log levels) |
+| `0xa64000–0xa7e000` | RakNet core + SecuredConnection crypto |
+| `0xa7e000–0xaa8600` | D3DX8 (static), incl. CPU detect, libpng 1.0.5, zlib 1.1.3 |
+| `0xaa8600–0xac2000` | MSVC 7.1 CRT / STL (Ghidra Function ID matched 360) |
+
 ## Networking
 | Addr | Role |
 |---|---|

@@ -36,3 +36,20 @@ jg_static_dump.py  Jumpgate.exe [out.csv]
     beacons, stations, ...) with position/orientation to CSV. Standalone:
     needs only an objdump with PE/i386 support. Build-specific (checks SHA-256).
 extract_static_objects.py  (older, superseded by jg_static_dump.py)
+
+jg_functions.py — function inventory / naming coverage
+  python3 tools/jg_functions.py ../Jumpgate.exe        (from notes/; ~5 s)
+  Reads function_names.csv (hand-curated: addr,name,area,confidence,ref),
+  enumerates ~3,360 functions (call targets + pointer-table starts), auto-adds
+  the 30 region-init functions and the 86 game-dispatcher cases, and writes
+  functions.csv + a coverage summary. To name something: add a row to
+  function_names.csv and re-run. Don't hand-edit functions.csv.
+  Naming tiers in functions.csv (column name_source), highest priority first:
+    curated   function_names.csv          region     static-world init fns
+    fid/fid-multi  Ghidra Function ID (ghidra/ghidra_functions.tsv, vsOlder_x86)
+    compiler  Unwind@/Catch@ SEH funclets (excluded from coverage counts)
+    libstring libpng 1.0.5 / zlib 1.1.3 error strings (inside D3DX8)
+    import    thin wrapper around one DLL import
+    string    the game's own debug/error strings ("Failed to send X packet", "Map.cpp: Fn:")
+  Regenerate ghidra/ghidra_functions.tsv with analyzeHeadless + ExportFuncs.java
+  (see ghidra/README.txt); ~3 min.
