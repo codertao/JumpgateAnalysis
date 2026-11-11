@@ -12,7 +12,8 @@
  * Recording: appends every message to jgcap.bin next to the exe:
  *   u8 dir(0=S>C,1=C>S)  u32 ms(GetTickCount)  u16 len  u8 data[len]
  * (data[0] = game message type). Read it with jgcap_dump.py / jgdecode.py.
- * NOTE the log contains your cleartext login; treat it as sensitive.
+ * The login password is redacted in the recorded copy (redact_login); older
+ * captures made before this change still contain it.
  *
  * MitM rules (optional): jgmitm_rules.txt next to the exe, one per line.
  *   # comment
@@ -42,9 +43,34 @@ struct rule { unsigned char dir, type, drop; int off; unsigned char val; };
 static struct rule g_rules[MAXRULES];
 static int g_nrules;
 
+/* Login (C>S type 0x05, short; the 176-byte 0x05 state report is not touched):
+ *   [05] callsign\0 password\0 ... version @0x16
+ * Only the RECORDED copy is changed: everything after the callsign's NUL up to
+ * the version field is zeroed and the password slot reads "*". The game still
+ * sends the real message. */
+#define LOGIN_MAX_LEN 64
+#define LOGIN_VERSION_OFF 0x16
+static const unsigned char *redact_login(const unsigned char *data, int len,
+                                         unsigned char *buf)
+{
+    if (len < 2 || len > LOGIN_MAX_LEN || data[0] != 0x05) return data;
+    memcpy(buf, data, len);
+    int p = 1;
+    while (p < len && buf[p]) p++;               /* end of callsign */
+    p++;                                          /* start of password */
+    int end = len < LOGIN_VERSION_OFF ? len : LOGIN_VERSION_OFF;
+    if (p < end) {
+        memset(buf + p, 0, end - p);
+        buf[p] = '*';
+    }
+    return buf;
+}
+
 static void log_msg(unsigned char dir, const unsigned char *data, int len)
 {
     if (!g_log || len <= 0 || len > 0xffff) return;
+    unsigned char red[LOGIN_MAX_LEN];
+    if (dir == 1) data = redact_login(data, len, red);
     unsigned int ms = GetTickCount();
     unsigned short l = (unsigned short)len;
     EnterCriticalSection(&g_lock);

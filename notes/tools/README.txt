@@ -53,3 +53,7 @@ jg_functions.py — function inventory / naming coverage
     string    the game's own debug/error strings ("Failed to send X packet", "Map.cpp: Fn:")
   Regenerate ghidra/ghidra_functions.tsv with analyzeHeadless + ExportFuncs.java
   (see ghidra/README.txt); ~3 min.
+
+Login redaction (2026-11-11): the shim zeroes the password in the RECORDED copy of
+the C>S login (short type 0x05, password slot shows '*'); the real login is sent
+unchanged. Older captures (jgcap.firstgood.bin etc.) still contain the password.

@@ -28,8 +28,9 @@ client (`Jumpgate.exe`, SHA-256 `fef6e50f...`, "2.0127" build, server
 - Transport is AES (RakNet secure mode) but the key exchange is **unauthenticated**
   with a **Mersenne-Twister RNG** → active MitM is feasible on an intercepted link.
 - Login **password is cleartext** inside the game layer. Capture files can contain
-  it — the ones saved here are redacted/server-side-only; keep any raw `jgcap.bin`
-  private and delete it between runs.
+  it — the ones saved here are redacted/server-side-only. Since 2026-11-11 the
+  shim redacts the password itself when recording, but older raw captures still
+  hold it: keep them private and delete them.
 - Server→client **type 0xFE** does unrestricted memory writes into the client
   (server-pushed patching, no checks). Observed use was benign (renaming medals).
 
