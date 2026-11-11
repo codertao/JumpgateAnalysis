@@ -1,0 +1,175 @@
+loc_id,name,region_init_fn,static_objects
+0,?,0x4aeed0,158
+101,Solrain-Core Station,0x6769c0,126
+102,The Wake-Station,0x6769c0,130
+103,The Cornea-Station,0x6769c0,119
+104,Octavius-Core Station,0x6769c0,114
+105,?,0x6769c0,250
+106,The Outpost-Station,0x6769c0,123
+107,Quantar-Core Station,0x6769c0,489
+108,TriPoint-Station,0x6769c0,162
+109,The Corridor-Station,0x6769c0,199
+110,Hyperial,0x721060,118
+111,Amananth,0x721060,116
+112,Lothar's Landing,0x721060,7
+113,Evenings End,0x721060,7
+114,?,0x721060,7
+115,Klatsches Hold,0x721060,7
+116,Solrain Depot,0x590a10,91
+117,Octavius Depot,0x590a10,86
+118,Quantar Depot,0x590a10,145
+201,The Inner Lighthouse,0x72a8b0,165
+202,The Greater Locks,0x72a8b0,281
+203,The Outer Lighthouse,0x72a8b0,248
+204,Purian Lake,0x72a8b0,222
+205,Morain Harbour,0x72a8b0,161
+206,Wanderer's Pond,0x72a8b0,115
+207,Tranquillus Major,0x72a8b0,149
+208,The Fields,0x75c2a0,173
+209,The Bronci Rift,0x75c2a0,103
+210,The Sea of Solrain,0x75c2a0,141
+211,Tranquillus Minor,0x75c2a0,123
+212,The Inner Oasis,0x75c2a0,148
+213,Midpoint Rift,0x75c2a0,80
+214,The Outer Oasis,0x75c2a0,73
+215,The Azure Churn,0x75c2a0,87
+216,The Narrow Canal,0x75c2a0,83
+217,The Lesser Locks,0x75c2a0,102
+218,The Cerulean Clouds,0x75c2a0,79
+219,Tribular Canal,0x75c2a0,140
+220,The Outer Depths,0x78d990,78
+221,Imperial Causeway,0x78d990,120
+222,Orrus Minor,0x78d990,137
+223,Orrus Major,0x78d990,164
+224,Imperial Gates,0x78d990,153
+225,Octavian Shore,0x78d990,71
+226,Verselus' Hook,0x78d990,82
+227,The Dark Fork,0x78d990,139
+228,Imperial Crossroads,0x78d990,63
+229,Vorgus2,0x78d990,94
+230,The Blasted Corner,0x78d990,69
+231,The Divide,0x78d990,69
+232,The Outer Rim,0x78d990,85
+233,The Rim,0x7bea90,81
+234,The Edge,0x7bea90,138
+235,Arkan's Cloud,0x7bea90,35
+236,Sark's Passage,0x7bea90,122
+237,Primus Point,0x7bea90,334
+238,The Outer Edge,0x7bea90,148
+239,Quantar Gate,0x7bea90,397
+240,The Quadrangle,0x7ecfd0,97
+241,Long Walk,0x7ecfd0,64
+242,Ring View,0x7ecfd0,220
+243,Omni V,0x7ecfd0,134
+244,Omni IV,0x7ecfd0,209
+245,Path of Hordes,0x7ecfd0,120
+246,Hyperion Gate,0x7ecfd0,128
+247,Quantar Hook,0x7ecfd0,147
+248,Ekoo's Stop,0x7ecfd0,342
+249,Tictac's Hook,0x7ecfd0,112
+250,Square of Quantos,0x8271e0,124
+251,Rounds of Quantos,0x8271e0,155
+252,Quanaus Crossing,0x8271e0,131
+253,Outer Roh-Cloud,0x8271e0,188
+254,Inner Roh-Cloud,0x8271e0,110
+255,Hook of Roh,0x8271e0,154
+256,The Dark Path,0x8271e0,294
+257,The Dark Trail,0x8271e0,445
+258,The Dark End,0x8271e0,292
+259,Orus' Leg,0x86cf50,139
+260,Orus' Tail,0x872180,422
+261,Upper Third,0x872180,140
+262,Outer Third,0x872180,142
+263,Inner Third,0x872180,69
+264,Third Gate,0x872180,332
+265,Aman Gate,0x872180,358
+266,Last Parsec,0x872180,75
+267,The Gyre,0x872180,74
+268,Aman Hook,0x872180,75
+269,The Split,0x872180,143
+270,The Last Point,0x8b5b20,135
+271,The Dark,0x8b5b20,173
+272,Sea of Shadows,0x8b5b20,154
+273,Inner Aman,0x8b5b20,73
+274,The Stith,0x8b5b20,169
+275,Dark Gateway,0x8b5b20,350
+276,Diluted Reaches,0x8b5b20,340
+277,The Connexion,0x8b5b20,283
+278,The Dark Crossroads,0x8b5b20,185
+279,The Light Crossroads,0x8fa750,357
+280,Far Point,0x8fa750,300
+281,Outer Gyre,0x8fa750,727
+282,Lesser Arm,0x92d910,682
+283,Inner Gyre,0x946b80,508
+284,Light Gateway,0x946b80,116
+285,Greater Arm,0x946b80,328
+286,Four Fingers,0x946b80,807
+287,Saron's Shoulder,0x987a00,837
+288,Saron's Eye,0x987a00,464
+289,Outskirts,0x987a00,321
+290,Light Lost,0x4bc720,200
+291,Inner Storm,0x4bc720,295
+292,Outer Storm,0x4bc720,148
+293,Outer Ring,0x4bc720,446
+294,Great Venure Belt,0x4bc720,263
+295,?,0x4ee5e0,75
+296,Inner Cloud,0x4ee5e0,145
+297,The Reaches,0x4ee5e0,259
+298,Outer Cloud,0x4ee5e0,135
+299,The Main Gate,0x4ee5e0,375
+300,Hyperian Hook,0x512e80,95
+301,The Rear Gate,0x512e80,71
+302,Far Gate,0x512e80,136
+303,Zealots Refuge,0x512e80,356
+304,The Gurge,0x512e80,76
+305,Pulsar,0x512e80,956
+306,Callow Passage,0x512e80,94
+307,Hirbel's Channel,0x554d80,142
+308,Mokk's Battlefield,0x554d80,133
+309,Canis 9502,0x554d80,140
+310,Aman Leap,0x59c830,75
+311,Contact,0x59c830,75
+312,Explorers' Haven,0x59c830,74
+313,The Depths,0x59c830,144
+314,The Disturbance,0x59c830,79
+315,First Sight,0x59c830,74
+316,The Chase,0x5afe40,74
+317,Pulsar Gate,0x5afe40,463
+318,LMHB-3324,0x5afe40,680
+319,The Killing Fields,0x5afe40,294
+320,Bloody Bay,0x5afe40,415
+321,No Man's Land,0x5f6f60,319
+322,Death's Door,0x5f6f60,160
+323,The Hunting Grounds,0x5f6f60,346
+324,C-3307,0x5f6f60,244
+325,C-3303,0x5f6f60,243
+326,C-3309,0x6276f0,155
+327,C-3306,0x6276f0,155
+328,C-3302,0x6276f0,154
+329,C-3304,0x6276f0,154
+330,C-3308,0x6276f0,154
+331,C-3305,0x643fd0,71
+332,C-1100,0x643fd0,142
+333,Courage,0x643fd0,143
+334,C-1101,0x643fd0,143
+335,C-1096,0x643fd0,102
+336,C-1095,0x65a450,102
+337,C-1097,0x65a450,102
+338,C-1102,0x65a450,103
+339,C-1098,0x65a450,102
+340,C-2199,0x65a450,357
+341,C-2200,0x6b5960,358
+342,Prawn's Nest,0x6b5960,356
+343,C-2201,0x6b5960,357
+344,C-2204,0x6b5960,358
+345,C-2203,0x6ea550,336
+346,C-2206,0x6ea550,335
+347,Cynomys Passage,0x6ea550,335
+348,Subspace,0x6ea550,7
+349,Unknown,0x6ea550,470
+1000,?,0x564210,287
+1001,?,0x564210,183
+1002,?,0x564210,467
+1003,?,0x564210,266
+1004,?,0x564210,3
+1005,?,0x564210,13

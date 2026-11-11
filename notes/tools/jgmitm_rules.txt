@@ -1,0 +1,11 @@
+# Jumpgate message-layer MitM rules. Copy next to Jumpgate.exe to activate.
+# Empty / all-comment file = pure recording, no modification.
+#
+#   drop S <type>              drop an incoming (server->client) message
+#   set  S <type> <off> <hex>  patch one byte of an incoming message
+#   set  C <type> <off> <hex>  patch one byte of an outgoing message
+# type = hex, off = decimal (byte 0 is the type). See jgmitm.log for an audit.
+#
+# Examples (disabled):
+# drop S 62            # swallow "pilot left station" notices
+# set  C 09 1 00       # force every Command subop to 0

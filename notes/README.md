@@ -1,0 +1,41 @@
+# Jumpgate.exe reverse-engineering notes
+
+Working notes on the networking protocol and crypto of this Jumpgate revival
+client (`Jumpgate.exe`, SHA-256 `fef6e50f...`, "2.0127" build, server
+`jumpgate-tri.org`). Produced by reverse engineering + one captured session on
+2026-11-10. Verify the binary hash before trusting any address.
+
+## Contents
+- **network-protocol.md** — the full stack: UDP/RakNet, obfuscation, framing,
+  key exchange summary, the Msb32 add-on, and a security assessment.
+- **message-types.md** — per-type field layouts, both directions.
+- **key-exchange.md** — RakNet SecuredConnection crypto in detail.
+- **reversing-map.md** — address/function map for this binary.
+- **captures/** — data from the 2026-11-10 session:
+  - `server_messages_decoded.txt` — decoded server→client messages.
+  - `timeline_sanitized.txt` — full session timeline (login **redacted**).
+  - `send_types.txt` — client→server types from static analysis.
+- **tools/** — the capture/MitM tooling (see `tools/README.txt`):
+  - `Msb32.dll` (+ `msb32_proxy.c`) — drop-in recording/MitM shim.
+  - `jgdecode.py`, `jgcap_dump.py`, `pcapread.py`, `jgrelay.py`,
+    `jgmitm_rules.txt`.
+- **ghidra/** — saved Ghidra analysis snapshot (skip the long re-import).
+
+## Security headlines
+- Transport is AES (RakNet secure mode) but the key exchange is **unauthenticated**
+  with a **Mersenne-Twister RNG** → active MitM is feasible on an intercepted link.
+- Login **password is cleartext** inside the game layer. Capture files can contain
+  it — the ones saved here are redacted/server-side-only; keep any raw `jgcap.bin`
+  private and delete it between runs.
+- Server→client **type 0xFE** does unrestricted memory writes into the client
+  (server-pushed patching, no checks). Observed use was benign (renaming medals).
+
+## Status / open items
+- Message field layouts: solid for type bytes + early offsets, partial for deeper
+  structure (marked [inferred] in message-types.md).
+- Key exchange: primitives and handshake layout confirmed; exact modulus sourcing
+  and AES mode not fully traced (see key-exchange.md "Still open").
+- Not needed for the message-layer MitM, which works inside the crypto boundary.
+
+> Scope: this is for understanding and intercepting one's **own** client on one's
+> own machine. Don't point the tooling at the live server or other players.
