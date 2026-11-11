@@ -167,3 +167,56 @@ confirmed. Counts are `new` calls in each fn, so approximate.
 | `0xbe5c18` | tick counter (2..18) · `0xbe5dc8`/`0xbe5dd8` QPC now/freq |
 | `0x1042118 + i*0x160c` | contact/ship table (i 10..199; +0 active, +1 dead, +0x94 distance) |
 | `0xff2a50..0xff2af0` | own-ship snapshot shared by all location packets |
+
+## Conflux / bot AI — runs on the client  [static, 2026-11-11]
+The server assigns each bot (conflux) an **owning player**. That player's client
+runs the bot's AI and physics and reports its state back with `0x71` "botloc".
+Ownership moves to whichever player is nearest.
+
+| Addr | Role |
+|---|---|
+| `0xb341f0 + i*0x14`, i<50 | `pbotloc` table: +0 active, +1 AI state (0/1/2/3/8), +2/+3 bytes, +4 u16 bot id, +6 u16, +8 u16 ship slot, **+0xc u32 controller player id**, +0x10 u32 assigned/target player id |
+| S→C `0x71` handler `0x9d6f25` | spawn/assign: bot id @8, loc @0xa, ship type @0xc (219–259, else "Bot error - pbotloc->Shiptype is not valid"), ids @0x20/@0x24. If @0x24 == me: ship `+2`=0 (locally driven), controller=me, send a botloc right away. Otherwise links the bot to the owning player's ship slot. |
+| S→C `0x03` handler `0x9d1463` | also writes the table and ship `+2` (update/teardown) [inferred] |
+| `0x4338c0` | **online bot AI**, called every frame (`0xa26863`): per-bot state machine (`+1`), steering toward the target ship (`ship+2` = slot), rand-driven events |
+| `0x40bf50` | per-frame for bots *I* control: obstacle/ship avoidance (`0x409a40`), then sends botloc (`0x9ce490`) |
+| `0x42f360` | offline-sim AI (loc 1005, `/ai #` "Spawns a flux ... offline sim mode") |
+| `0x9c9d10` | botloc sender: 0x71 (52 B) per controlled bot (hull%, shield%, position, velocity, orientation). Runs after every 0x05 and on assignment. |
+| C→S `0x71` sub 3 | "botloc 3" — sent from the AI when a condition fires within 60 units [inferred: arrival/attack] |
+| C→S `0x2C` (12 B) "bxr" | handoff request: sent when a bot's controller is another player but **I** am closer to it (range scaled by ship radar) |
+| C→S `0xB0` (20 B) sub 3 | controller-only, 1-in-32000 rand per frame for ship types 230–233 within 1–200 units of the target: random event with client-rand payload [inferred: drop/spawn] |
+| `0x1042118 + slot*0x160c` | ship table: +0 active, +1 dead, **+2 controlling/target slot (0 = local, 0xfe = none)**, +3 0xff = valid, +0x94 distance, +0x15c8/+0x15cc hull, +0x15f8.. shields |
+
+Not verified: whether bot weapon fire and hit/damage resolution also run on
+the controlling client. Leads: missile update `0x42ca30` and hit processing
+`0x43a4a0` (sends "mkill") both read `ship+2`.
+
+## Weapon hits & damage — who reports what  [static, 2026-11-11]
+| Addr | Role |
+|---|---|
+| `0x102b350 + i*0x48` | shot table: +0 active, +4 range, +8 u16 weapon id, +0xa u16 class (1 = gun → `0x43f0c0`, 2 = bot shot / beam → `0x43a4a0`), +0xc pos, +0x44 u8 bot shooter slot |
+| `0x437590` | local player fires (callers `0x43da3e`/`0x43db90`, input) |
+| `0x439260` | every frame: re-creates *other* ships' shots from their firing bitmask (`ship+0x156f`) and weapon slots. Bot shots get class 2 + shooter slot. **Aim/lead for bots is computed only when `ship+2 == 0` (I control the bot).** |
+| `0x43f0c0` | gun hit test (shot vs ships slot ≥5) → hit queue |
+| `0x43a4a0` | bot-shot / beam / missile hit processing; bot shot hitting **slot 0 (me)** → local damage, `shields -= weapon[+0x50]` (×mods), overflow to hull, hull ≤ 0 → death `0x9cec40`; last attacker `0xbe5ca0 = 0x8000+bot slot` |
+| `0xb34660` | **hit queue** (16 × 20 B: u32 victim id, u16 bot id or 0xfe, u16 hit count (guns merged, ≤40), u8 kind, u8 weapon, f32 value (beam time / splash), u8 class 0 gun/1 missile splash/2 beam/3 special/…). Adders `0x43a060` gun, `0x43a130` missile splash, `0x43a1a0` mortar, `0x43a210` bldg repair, `0x43a2c0` beam, `0x43a360` special, `0x43efc0` missile dmg |
+| `0x43a3d0` | flush: one **C→S `0x1D`** (32 B) per entry, `[1D][pad3][u32 shooter=me][u16 loc][pad2][u32 victim][u16 id][u16 count][u8 kind][u8 weapon][pad2][f32 value][u8 class]`, called after each 0x33/0x34 tick |
+| S→C `0x03` handler `0x9d1463` | **damage delivery** `[03][?][u16 bot id or 0xfe @2][u32 attacker @4][f32 damage @8]`. 0xfe = me: subtract from own shields → hull, die locally. Bot id: only if I control that bot → damage it, retarget it at the attacker (aggro), botloc/killed. |
+| C→S `0x1A` (16 B) "mkill" | I shot down a missile (missile table `0x14fd990`) |
+| C→S `0x43` (12 B) | hits counter (fired/hit stats, periodic) |
+| C→S `0x44` (16 B) "who killed me" | sent on own death (`0x9cec40`) and when a bot I control dies (`0x9ce490` botloc killed) |
+
+Flow:
+- **Player → player:** the shooter's client detects the hit and sends 0x1D (count + weapon,
+  not a damage number). The server sends S→C 0x03 with an f32 damage value to the victim. The victim's client
+  applies it and declares its own death. So hit detection is shooter-side; the damage number
+  comes from the server (probably count × weapon damage [inferred]).
+- **Player → bot:** if I control the bot, the hit is applied locally and nothing is sent per hit
+  (the bot's hull/shield % goes out in botloc; death goes out as botloc-killed + 0x44). Otherwise
+  I send 0x1D, and the server sends 0x03 to the controlling client, which applies it.
+- **Bot → player:** the controller computes the bot's aim and firing. Every client replays the shots. The
+  **victim's client** hit-tests and applies damage to itself from its local weapon table.
+  Nothing is sent per hit; the server only sees the shield/hull numbers in the 0x05 state and
+  the 0x44 on death.
+- Open: whether a remote player's replayed gun shots also go through the victim's gun hit test
+  (which would double-count with the 0x1D path). Probably not (class not 1) — not verified.

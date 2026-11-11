@@ -27,7 +27,7 @@ Common sub-fields seen across many messages:
 | 0x04 | 27 | Chat line | `[04][05][u16 loc][u32 player_id][callsign\0][text...]` |
 | 0x65 | 36 | Join chat channel ("chat") | `[65][u16 loc?][u32 player_id]["chat"\0]...` |
 | 0x6A | 8 | Player-list / player request | `[6A][...][u32 player_id]` |
-| 0x71 | 52 | Simulator position report ("botloc 1000") | `[71]...` |
+| 0x71 | 52 | Bot state report "botloc" (see Space section; 1000 = offline-sim variant) | `[71]...` |
 | 0x8F | 1 | **Keepalive** | `[8F]` — one per connection every ~16 s |
 | 0xC1 | 12 | Job-list request | `[C1][sub][u16 loc][u32 player_id][u32]` |
 | 0xC8 | 8 | Logout / session end | `[C8][u16 loc?][u32 player_id]` |
@@ -94,14 +94,15 @@ client sends `0x05`(176)+`0x17`(10); server answers a batch of `0xa7`(56)×~10 +
 | 0x13 | 788 | S→C | Large table (world/sector state?) | [inferred] |
 | 0x87/0xB3/0xA7 | | | together = the entire streamed object population: 21 stations + 4 near-field | |
 
-Client → server in space:
+Client → server in space (also see reversing-map "Weapon hits & damage": C→S 0x1D hit report, 0x1A mkill, 0x44 who-killed-me; S→C 0x03 damage):
 | Type | Len | Name | Layout / notes |
 |---|---|---|---|
 | 0x05 | 176 | **"gloc 3" full location/state report** (every 17th location tick: ~13.6 s idle, ~5 s while steering) | `[05][state@1][flags@2][salt@3]` + equipment/cargo slot array (`fe fe`=empty, same format as 0x06 char record) + callsign`\0` + … + **`f32 clock_s @100`** (session clock, seconds) + … + **`f32 X @144, Y @148, Z @152`** (ship position, sector coordinates) + fixed capacity consts after. Sent by `0x9cd410`; see "Location update path" below. [capture-verified 2026-11-10: track matches route, gates, mining spot] |
 | 0x33 | 56 | **"small loc" fast position update** (only when another ship is within 10,000 units) | `[33][flags@1][state@2][salt@3][u16 loc@4]` + 6×i16 orientation (fwd+up unit vectors ×10000) @6 + 3×i16 (×10, velocity/rotation rate [inferred]) @0x12 + `u32@0x18` + **f32 X/Y/Z @0x1c** + f32 throttle·speed @0x28 + f32 @0x2c, @0x30 + **f32 clock_s @0x34** [static] |
 | 0x34 | 52 | **"mini loc" fast position update** (alternates with 0x33, same gating) | same as 0x33 minus the three ×10 shorts: 6×i16 orientation @6, `u32@0x14`, **f32 X/Y/Z @0x18**, f32 @0x24/0x28/0x2c, **f32 clock_s @0x30** [static] |
 | 0x17 | 10 | Compact companion report (1:1 with 0x05; sent by `0x9cb330` right after it, on the *state* connection) | `[17]` + 9 bytes that change every send — compact heading/input or state-hash [inferred]. |
-| 0x71 | 52 | Sim position report ("botloc 1000") | `[71]…[u16 1000=0x3e8]…[u16 loc ×2]`; all-zero / barely used in space. |
+| 0x71 | 52 | **Bot (conflux) state report "botloc"** — sent by the bot's controlling client | `[71][state][hull%][shield%][b][b][u16 id]…[u16 loc]` + i16 vel/orientation + `u32 player` + f32 pos. One per bot this client controls, after every 0x05; empty when you control none (so all-zero in the solo capture). See reversing-map "Conflux / bot AI". |
+| 0x2C | 12 | "bxr" bot handoff request | sent when I'm closer to a bot than its current controller |
 | 0x74 | 16 | **Asteroid amount request/update** | `[74][asteroid id][loc id=0x0ef9]…`. Client *queries* the server for a mineable asteroid's ore amount; strings: "request/update asteroid amount packet". |
 | 0x0F | 392 | Building / station interaction | sent on approach to a station. |
 
