@@ -7,11 +7,11 @@
 //! messages (client→server records, which can hold a login, are ignored) and
 //! never prints payloads.
 //!
-//! Fidelity caveats are the same as the session endpoint: no retransmission,
-//! lenient ordering, handshake RSA byte order unverified against a real client
-//! (`raknet::rsa::WIRE_LITTLE_ENDIAN`). If a real client won't complete the
-//! handshake, that flag is the first thing to flip; the `selftest`/loopback path
-//! proves the rest.
+//! Verified against the real game client (2026-11-12): handshake, AES, framing
+//! and replay all work. Fidelity caveats are the session endpoint's: no
+//! retransmission, lenient ordering. The replay is open-loop: messages are
+//! paced by the capture's clock, not by client requests (so a captured launch
+//! happens whether or not the player pressed launch).
 
 use raknet::capture;
 use raknet::session::{Endpoint, Event};
@@ -76,8 +76,17 @@ impl ReplayConn {
         match self.sock.recv_from(&mut buf) {
             Ok((n, from)) => {
                 if self.client_addr != Some(from) {
+                    // New client (or a reconnect from a new port): start a fresh
+                    // session and replay from the top.
+                    if self.client_addr.is_some() {
+                        eprintln!("[{}] new client address — resetting session", self.tag);
+                        self.endpoint = Endpoint::server();
+                        self.sent = 0;
+                        self.connected_at = None;
+                    }
                     eprintln!("[{}] client {from}", self.tag);
                     self.client_addr = Some(from);
+                    self.endpoint.set_peer_addr(from);
                 }
                 for ev in self.endpoint.recv(&buf[..n]) {
                     match ev {
@@ -147,8 +156,10 @@ pub fn run(
     speed: f32,
 ) -> io::Result<()> {
     let bytes = std::fs::read(capture_path)?;
-    let records = capture::parse(&bytes)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("bad capture: {e:?}")))?;
+    let (records, dropped) = capture::parse_lenient(&bytes);
+    if dropped > 0 {
+        eprintln!("[replay] ignoring {dropped} trailing byte(s): cut-off final record");
+    }
     let script: Script = capture::server_messages(&records)
         .map(|r| (r.ms, r.data.clone()))
         .collect();

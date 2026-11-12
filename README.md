@@ -28,8 +28,8 @@ traffic.
   | `ids` | message IDs + stock reliability enum | byte-verified |
   | `game` | 0x1A/0x51 framing + obfuscation | byte-verified (`0x9c8ca0`) |
   | `mt19937` | MT PRNG (reference only) | textbook; not on proxy path |
-  | `rsa`/`handshake` (`mitm`) | SecuredConnection | structure verified; **RSA wire order needs live calibration** |
-  | `session` (`mitm`) | full RakNet peer (client+server roles) | loopback + real-UDP tested |
+  | `rsa`/`handshake` (`mitm`) | SecuredConnection | verified with the real client (LE wire order) |
+  | `session` (`mitm`) | full RakNet peer (client+server roles) | verified: real client connects to the mock server |
   | `capture` | `jgcap.bin` reader | parsed; payloads never printed |
 
 - **`proxy`** (`jumpgate-proxy`) — the UDP relay / MitM. Default build is the
@@ -81,8 +81,7 @@ own keys (see spec §1.1a).
   established-phase crypto re-wrap is correct and covered by `selftest`. Two
   things still need calibrating against a real capture before it will complete a
   live handshake, both flagged in the code and the spec:
-  1. **RSA wire byte order** (`raknet::rsa::WIRE_LITTLE_ENDIAN`) — catid's
-     big-integer serialization isn't fully reversed; defaults to little-endian.
+  1. ~~RSA wire byte order~~ — verified little-endian via the mock server.
   2. **Reliability framing of injected handshake messages** — the proxy becomes a
      partial reliability endpoint for the handshake; its message-number/ack
      handling is approximate.
@@ -117,11 +116,22 @@ the real client at it. The `replay`↔`probe` path is exercised as two real
 processes over UDP, and the in-crate tests cover it as a loopback
 (`session::tests`) and over real sockets (`raknet/tests/udp_replay.rs`).
 
-Caveat: completing the handshake with the **real game client** still depends on
-the RSA wire byte order (`raknet::rsa::WIRE_LITTLE_ENDIAN`, default little-endian)
-and on handshake framing details — both unverified against the real client. If
-the real client won't connect, flip that flag first; everything downstream is
-proven by the self-tests. Point the client at the mock server by launching it
+Set `RAKNET_TRACE=1` to have the session log every received datagram and each
+handshake step to stderr. It prints lengths, IDs and decisions, never payload
+bytes:
+
+```sh
+RAKNET_TRACE=1 cargo run -p jumpgate-proxy --features mitm -- replay path/to/jgcap.bin
+```
+
+Status (2026-11-12): **works with the real game client.** It completes the full
+handshake (offline `0A`/`0B`, the SecuredConnection RSA exchange with LE wire
+order, AES) and the replay plays through. The replay is open-loop: captured
+messages play on the capture's clock, not in reply to client requests. A captured
+launch therefore throws the client into space unasked. In that case the HUD and
+flight controls only appeared after a trip to the menu and back. If you press
+launch before the captured reply arrives, the client blocks until it does, then
+carries on normally. Point the client at the mock server by launching it
 with `SERVER_IP=<mock-server-ip>` (the Msb32 shim's `GetIP` honours it; see
 `../notes/tools/README.txt`).
 

@@ -56,6 +56,28 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<Record>, CaptureError> {
     Ok(out)
 }
 
+/// Like [`parse`], but tolerates a cut-off final record — what the shim leaves
+/// behind when the game is killed mid-write (it appends on every launch).
+/// Returns the complete records and how many trailing bytes were dropped.
+pub fn parse_lenient(bytes: &[u8]) -> (Vec<Record>, usize) {
+    let mut out = Vec::new();
+    let mut i = 0usize;
+    while i + 7 <= bytes.len() {
+        let len = u16::from_le_bytes([bytes[i + 5], bytes[i + 6]]) as usize;
+        if i + 7 + len > bytes.len() {
+            break;
+        }
+        let dir = match bytes[i] {
+            0 => Dir::ServerToClient,
+            _ => Dir::ClientToServer,
+        };
+        let ms = u32::from_le_bytes([bytes[i + 1], bytes[i + 2], bytes[i + 3], bytes[i + 4]]);
+        out.push(Record { dir, ms, data: bytes[i + 7..i + 7 + len].to_vec() });
+        i += 7 + len;
+    }
+    (out, bytes.len() - i)
+}
+
 /// Server→client records only, in capture order — the replay script for a mock
 /// server. This deliberately drops client→server records (which may hold the
 /// login) since the mock server generates its own.
@@ -98,5 +120,16 @@ mod tests {
         // `Record` has no Debug/PartialEq by design (payloads must not be
         // printed/compared casually), so match rather than assert_eq.
         assert!(matches!(parse(&buf), Err(CaptureError::Truncated)));
+    }
+
+    #[test]
+    fn lenient_drops_cut_off_tail() {
+        let mut buf = rec(0, 1, &[1, 2, 3]);
+        let whole = buf.len();
+        buf.extend(rec(0, 2, &[4, 5, 6]));
+        buf.truncate(buf.len() - 1);
+        let (recs, dropped) = parse_lenient(&buf);
+        assert_eq!(recs.len(), 1);
+        assert_eq!(dropped, buf.len() - whole);
     }
 }

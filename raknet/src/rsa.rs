@@ -4,10 +4,10 @@
 //! `(e, n)`; the server decrypts with its private key. No padding (as in catid's
 //! `RSACrypt`). Feature `mitm` only.
 //!
-//! WIRE FORMAT CAVEAT (see ../notes/raknet-spec.md §1): the exact byte order of
-//! `e`/`n`/message on the wire is catid's big-integer limb layout, which is NOT
-//! fully reversed yet. We default to little-endian (x86 limb order). If live
-//! handshakes fail, flip [`WIRE_LITTLE_ENDIAN`] and re-test against a capture.
+//! WIRE FORMAT: `e`/`n`/the encrypted random are little-endian (catid's x86 limb
+//! order). VERIFIED 2026-11-12: the real client completed the handshake against
+//! the mock server, which only reports success once the client's traffic
+//! decrypts with the RSA-agreed key.
 //! For the self-contained round-trip (proxy talking to itself) the choice is
 //! internally consistent and always works.
 
@@ -16,7 +16,7 @@ use num_integer::Integer;
 use num_traits::{One, Zero};
 use rand::RngCore;
 
-/// Set false if a live capture shows catid serialises big-endian.
+/// Little-endian on the wire (verified against the real client, 2026-11-12).
 pub const WIRE_LITTLE_ENDIAN: bool = true;
 
 pub const MODULUS_BYTES: usize = 32; // 256-bit n

@@ -107,9 +107,14 @@ impl Datagram {
     }
 }
 
+/// Width of the reliability field in an internal-packet header.
+const RELIABILITY_BITS: u32 = 3;
+
 fn read_packet(r: &mut BitReader) -> Result<InternalPacket, ParseError> {
     let message_number = r.read_u16()?;
-    let rel_raw = r.read_bits(4)? as u8;
+    // Stock 2.x: 3 bits (reader 0xa703dd, writer 0xa7029f). SA:MP widened this
+    // to 4 for its renumbered 6..10 enum; using 4 here misparses everything.
+    let rel_raw = r.read_bits(RELIABILITY_BITS)? as u8;
     let reliability = Reliability::from_u8(rel_raw).ok_or(ParseError::BadReliability(rel_raw))?;
 
     let (mut ordering_channel, mut ordering_index) = (0u8, 0u16);
@@ -144,7 +149,7 @@ fn read_packet(r: &mut BitReader) -> Result<InternalPacket, ParseError> {
 
 fn write_packet(w: &mut BitWriter, pkt: &InternalPacket) {
     w.write_u16(pkt.message_number);
-    w.write_bits(pkt.reliability as u32, 4);
+    w.write_bits(pkt.reliability as u32, RELIABILITY_BITS);
     if pkt.reliability.has_ordering() {
         w.write_bits(pkt.ordering_channel as u32, 5);
         w.write_u16(pkt.ordering_index);
@@ -167,6 +172,28 @@ fn write_packet(w: &mut BitWriter, pkt: &InternalPacket) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The real client's first reliable datagram: CONNECTION_REQUEST `[05]`,
+    /// message #0, RELIABLE, no acks. 1+16+3+1 header bits + 6-bit compressed
+    /// length (8), padded to 32, then the byte = 5 bytes. Observed live as a
+    /// 5-byte datagram starting 0x00 (2026-11-12).
+    #[test]
+    fn connection_request_wire_bytes() {
+        let wire = [0x00, 0x00, 0x27, 0x00, 0x05];
+        let dg = Datagram {
+            acks: vec![],
+            packets: vec![InternalPacket {
+                message_number: 0,
+                reliability: Reliability::Reliable,
+                ordering_channel: 0,
+                ordering_index: 0,
+                split: None,
+                data: vec![0x05],
+            }],
+        };
+        assert_eq!(dg.serialize(), wire);
+        assert_eq!(Datagram::parse(&wire).unwrap(), dg);
+    }
 
     fn sample() -> Datagram {
         Datagram {

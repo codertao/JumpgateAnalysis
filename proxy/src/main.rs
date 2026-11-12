@@ -199,8 +199,8 @@ fn run_replay() {
         }
         eprintln!(
             "[warn] mock server is for testing YOUR OWN client with NO live server. \
-             Handshake RSA byte order is unverified against a real client (see \
-             notes/raknet-spec.md); flip raknet::rsa::WIRE_LITTLE_ENDIAN if it fails."
+             Replay is open-loop: captured messages play on the capture's clock, \
+             regardless of what the client requests."
         );
         if let Err(e) = replay::run(&capture, listen, state_port, space_port, speed) {
             eprintln!("[replay] error: {e}");

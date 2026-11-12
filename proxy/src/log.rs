@@ -49,7 +49,7 @@ pub fn datagram(tag: &str, dir: &str, bytes: &[u8], v: Verbosity, decryptable: b
     };
     print!("[{tag}] {dir} {:>4}B first={id_str}", bytes.len());
 
-    // Offline connect messages (0x13/0x14) are bare, not reliability-wrapped.
+    // Offline connect messages (0x0A/0x0B) are bare, not reliability-wrapped.
     let is_offline = matches!(
         id,
         Some(MessageId::OpenConnectionRequest | MessageId::OpenConnectionReply)
