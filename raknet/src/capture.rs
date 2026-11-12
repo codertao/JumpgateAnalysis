@@ -9,7 +9,7 @@
 //! record (newer captures redact it; older ones may not). This reader never
 //! implements `Debug`/`Display` over payloads, and the mock-server replay path
 //! uses only server→client records. Treat any `jgcap.bin` as secret and keep it
-//! out of the repo (see `../notes` and the workspace `.gitignore`).
+//! out of the repo (see `notes` and the workspace `.gitignore`).
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Dir {

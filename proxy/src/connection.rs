@@ -7,7 +7,7 @@
 //! * `MitmConn` (feature `mitm`, EXPERIMENTAL) — terminates both crypto halves
 //!   so the encrypted phase can be observed. The established-phase crypto
 //!   re-wrap is correct and offline-tested; the handshake orchestration still
-//!   needs calibrating against a live capture (see `../notes/raknet-spec.md`:
+//!   needs calibrating against a live capture (see `notes/raknet-spec.md`:
 //!   RSA byte order, and the reliability framing of injected handshake msgs).
 
 use crate::log::{self, Verbosity};

@@ -1,7 +1,7 @@
 //! RakNet `BitStream`: MSB-first bit packing. Multi-byte integers are stored
 //! little-endian *byte* order, each byte packed MSB-first (matches
 //! `BitStream::WriteBits`/`ReadBits` with `rightAlignedBits`). See
-//! `../notes/raknet-spec.md` §3.
+//! `notes/raknet-spec.md` §3.
 //!
 //! Only the pieces the reliability layer needs are implemented: bits, bytes,
 //! u16, the compressed integer encoding, and byte-aligned raw bytes.

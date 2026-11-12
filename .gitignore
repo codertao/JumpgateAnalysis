@@ -1,7 +1,7 @@
 /target
 **/*.rs.bk
 Cargo.lock
-# Never commit captures — they can contain a cleartext login (see ../notes).
+# Never commit captures — they can contain a cleartext login (see notes).
 *.jgcap
 *.bin
 *.pcap

@@ -1,6 +1,6 @@
 //! RakNet 2.x message IDs (classic `PacketEnumerations.h`) and the stock
 //! `PacketReliability` enum, both byte-verified for this binary
-//! (`../notes/network-protocol.md` §1.1b, `raknet-spec.md`).
+//! (`notes/network-protocol.md` §1.1b, `raknet-spec.md`).
 //!
 //! NB: Jumpgate uses the *stock* reliability numbering (0..4). The SA:MP source
 //! renumbers it to 6..10 — do not use that here. `SendGameMessage` (`0x9c9c10`)

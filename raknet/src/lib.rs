@@ -1,6 +1,6 @@
 //! RakNet 2.x transport as used by Jumpgate.exe (build `fef6e50f…`).
 //!
-//! Implements the layers described in `../notes/raknet-spec.md`:
+//! Implements the layers described in `notes/raknet-spec.md`:
 //!
 //! ```text
 //! UDP datagram

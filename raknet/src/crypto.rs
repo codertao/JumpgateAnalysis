@@ -1,7 +1,7 @@
 //! RakNet `DataBlockEncryptor`: AES-128 with a manual block chain, a leading
 //! running checksum, and random padding. Byte-verified against the binary
 //! (`Encrypt 0xa786b0`, `Decrypt 0xa78820`, `IsKeySet 0xa78640`; the encryptor
-//! sub-object lives at `conn+0x414`). See `../notes/raknet-spec.md` §2.
+//! sub-object lives at `conn+0x414`). See `notes/raknet-spec.md` §2.
 //!
 //! Layout of a plaintext block before encryption (then padded to a 16-byte
 //! multiple and chained):

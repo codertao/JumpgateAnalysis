@@ -1,15 +1,15 @@
 # jumpgate-rs
 
-A Rust workspace implementing the RakNet 2.x transport used by the Jumpgate
-client, and a proxy that sits in front of **your own** client so the protocol in
-[`../notes/raknet-spec.md`](../notes/raknet-spec.md) can be verified against live
+A Rust workspace implementing various components related to the Jumpgate
+client, including raknet 2.x and a proxy that sits in front of **your own** 
+client so the protocol in [`notes/raknet-spec.md`](notes/raknet-spec.md) can be verified against live
 traffic.
 
 > **Scope / ethics.** This is an academic study of your own client and your own
 > connection. The proxy is an *observer*: the relay never alters content, and the
 > MitM mode only re-wraps the crypto envelope (the plaintext is forwarded
 > unchanged). Get the fan server operators' permission before doing anything
-> beyond observing your own traffic. Captures can contain a cleartext login —
+> beyond observing your own traffic. Captures could contain a cleartext login —
 > keep them out of the repo (`.gitignore` covers `*.bin`/`*.jgcap`/`*.pcap`).
 
 ## Crates
@@ -48,7 +48,7 @@ cargo run -p jumpgate-proxy --features mitm -- selftest
 
 Point your client at the host running the proxy by setting `SERVER_IP` before
 launch — the Msb32 shim's `GetIP` returns it instead of resolving the DNS TXT
-record `_game_server.jumpgate-tri.org` (see `../notes/tools/README.txt`). No
+record `_game_server.jumpgate-tri.org` (see `notes/tools/README.txt`). No
 hosts/DNS edits needed. `--server` is the real server IP the proxy forwards to.
 
 ```sh
@@ -133,11 +133,11 @@ flight controls only appeared after a trip to the menu and back. If you press
 launch before the captured reply arrives, the client blocks until it does, then
 carries on normally. Point the client at the mock server by launching it
 with `SERVER_IP=<mock-server-ip>` (the Msb32 shim's `GetIP` honours it; see
-`../notes/tools/README.txt`).
+`notes/tools/README.txt`).
 
 ## Relation to the Msb32 shim
 
-If you only need to observe or tweak *messages* (not the transport), the
-in-process `Msb32.dll` shim in `../notes/tools/` sits inside the crypto boundary
+If you only need to observe *messages* (not the transport), the
+in-process `Msb32.dll` shim in `notes/tools/` sits inside the crypto boundary
 and needs none of this. This proxy is for a standalone, out-of-process view of
 the whole stack, and as groundwork for a from-scratch client.

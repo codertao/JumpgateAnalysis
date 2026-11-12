@@ -1,5 +1,5 @@
 //! RakNet SecuredConnection handshake (message framing + AES-key derivation),
-//! byte-verified against the binary (`../notes/key-exchange.md`,
+//! byte-verified against the binary (`notes/key-exchange.md`,
 //! `raknet-spec.md` §1). Feature `mitm` only.
 //!
 //! ```text

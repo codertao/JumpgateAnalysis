@@ -1,7 +1,7 @@
 //! RakNet 2.x reliability datagram: an optional acknowledgement list followed by
 //! bit-packed internal packets. Follows the archived source
 //! (`GenerateDatagram` / `WriteToBitStreamFromInternalPacket`); see
-//! `../notes/raknet-spec.md` §3. Round-trip tested below.
+//! `notes/raknet-spec.md` §3. Round-trip tested below.
 //!
 //! NOTE: this layer is for *inspection and the round-trip correctness test*. The
 //! proxy forwards by re-encrypting the raw decrypted plaintext, so a bug here

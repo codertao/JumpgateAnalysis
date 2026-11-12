@@ -1,7 +1,7 @@
 # Jumpgate RakNet 2.x workspace.
 #
-# Academic study of the Jumpgate client's networking (see ../notes). The crates
-# here implement the RakNet 2.x transport described in ../notes/raknet-spec.md so
+# Academic study of the Jumpgate client. The crates
+# here implement the RakNet 2.x transport described in notes/raknet-spec.md so
 # that a man-in-the-middle proxy can sit in front of *your own* client and verify
 # the spec against live traffic. It is an observer: it never intentionally alters
 # game content (see proxy/README section in the workspace README).
