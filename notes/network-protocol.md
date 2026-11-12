@@ -33,6 +33,47 @@ UDP datagram
   high-entropy bytes → **RakNet AES is active** [capture]. A raw pcap therefore
   yields only sizes/timing; plaintext requires the in-process shim (see tools).
 
+### 1.1b RakNet version  [static + reference sources, 2026-11-12]
+There are no version strings. The only RakNet text is "RakNet base connection to
+'Unknown Server' acquired…". So the version was identified from the **message-ID
+enum** the internal handler uses (comparisons at `0xa6d8e0..0xa6e2f0`, called from
+`0xa6de95`/`0xa6dfe3`) and from the timestamp helpers `0xa63ae0`/`0xa63b00`.
+
+| ID | Binary evidence | Classic 2.x `PacketEnumerations.h` |
+|---|---|---|
+| 3 | handled | ID_CONNECTED_PONG |
+| 4 | handled | ID_REQUEST_STATIC_DATA |
+| 5 | handled | ID_CONNECTION_REQUEST |
+| 6 / 7 | handled (key exchange) | ID_SECURED_CONNECTION_RESPONSE / _CONFIRMATION |
+| 8 | handled | ID_RPC_MAPPING |
+| 9 | handled | ID_DETECT_LOST_CONNECTIONS |
+| 0x0c | handled | ID_RPC |
+| 0x10 | handled | ID_CONNECTION_REQUEST_ACCEPTED |
+| 0x11 | emitted | ID_CONNECTION_ATTEMPT_FAILED |
+| 0x12 | handled | ID_NEW_INCOMING_CONNECTION |
+| 0x14 | handled | ID_DISCONNECTION_NOTIFICATION |
+| 0x19 | emitted | ID_MODIFIED_PACKET |
+| 0x1a | `[1a][u32 time]` skipped by the receive helpers (payload at +5/+6) | ID_TIMESTAMP (32-bit RakNetTime) |
+| 0x1c | handled | ID_RECEIVED_STATIC_DATA |
+
+All 14 match the classic RakNet **2.x** ordering. The source used to check is the
+SA:MP RakNet header with its inserted `ID_DUMMY_*` entries removed. The later 2.x
+reshuffle (ID_RPC = 8, ID_KEEPALIVE = 12, ID_TIMESTAMP = 28, e.g. Blobby Volley's copy)
+does **not** match. Neither does 3.x `MessageIdentifiers.h`.
+
+**Conclusion:** RakNet 2.x, before the enum reshuffle, roughly 2004–05. Signs of that
+era: "static data", ID_RPC_MAPPING, a 32-bit timestamp, SecuredConnection/RSACrypt
+handshake, and a DataBlockEncryptor-style AES. The exact minor version is not
+pinned. Next step for that: diff the ReliabilityLayer datagram header bit layout
+(`0xa6af20` area) against archived 2.x sources.
+
+Practical notes for a reimplementation:
+- Modern RakNet crates (e.g. Rust `rak-rs`, the Bedrock flavour) speak a different,
+  incompatible protocol.
+- The closest public code is the RakNet 2.x copies in the SA:MP community
+  (resamp-raknet, 0xcds4r/RakNet, Alf21/samp). Mind the SA:MP-specific changes:
+  the dummy IDs and their own packet scrambling.
+
 ### 1.1a Which server each message goes to  [static, 2026-11-12]
 The client has **one sender per connection**. Both of them obfuscate the payload and
 then call RakNet send:
@@ -114,7 +155,9 @@ See `message-types.md` for the per-type field layouts.
 
 ## 2. Key exchange  [static]
 
-RakNet's old **SecuredConnection / RSACrypt** — see `key-exchange.md` for detail.
+RakNet's old **SecuredConnection / RSACrypt** — see `key-exchange.md` for the
+handshake and `raknet-spec.md` for the full 2.x transport (crypto, reliability
+datagram layout, MitM proxy plan).
 Summary:
 - **256-bit prime-field modular exponentiation** (Diffie–Hellman/RSA family).
   **No elliptic curve, no fixed curve parameters**; the modulus is runtime data

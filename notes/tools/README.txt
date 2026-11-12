@@ -20,6 +20,15 @@ INSTALL (records both directions to jgcap.bin; applies rules if present)
 UNINSTALL
   mv Msb32_orig.dll Msb32.dll
 
+REDIRECTING THE CLIENT (point it at a local proxy / mock server)
+  Set the SERVER_IP environment variable before launching; GetIP then returns it
+  instead of doing the DNS TXT lookup for _game_server.jumpgate-tri.org. No hosts
+  or DNS changes needed. Only a dotted IPv4 (<=15 chars) is honoured; anything
+  else (or unset) falls back to the normal DNS lookup. The override is logged to
+  the event log ("GetIP: SERVER_IP override -> ...").
+    SERVER_IP=127.0.0.1 Jumpgate.exe       # or set it in the launching shell
+  Pair with jumpgate-rs' `replay` (mock server) or `proxy` for an end-to-end test.
+
 NOTES / LIMITS
   * jgcap.bin contains your cleartext login. Treat it as sensitive; delete between runs.
   * 'drop C' (suppressing an outgoing message) is not supported by the encoder

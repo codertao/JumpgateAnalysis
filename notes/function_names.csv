@@ -113,3 +113,11 @@ addr,name,area,confidence,ref
 0x4680c0,power_budget,items,med,items.md#global-item-ids
 0xa60b90,gun_ctor,items,high,items.md#guns--separate-objects
 0x9c9c90,SendSpaceMessage,net,high,network-protocol.md#11a-which-server-each-message-goes-to
+0x49da20,slash_command_parser,ui,high,slash-commands.md
+0xa786b0,DataBlockEncryptor_Encrypt,net-crypto,high,raknet-spec.md#2-datablockencryptor-aes-128
+0xa78820,DataBlockEncryptor_Decrypt,net-crypto,high,raknet-spec.md#2-datablockencryptor-aes-128
+0xa78640,DataBlockEncryptor_IsKeySet,net-crypto,high,raknet-spec.md#2-datablockencryptor-aes-128
+0xa79e00,CheckSum_Add,net-crypto,high,raknet-spec.md#checksumaddbyte
+0xa79770,aes_blockEncrypt,net-crypto,high,raknet-spec.md
+0xa79ac0,aes_blockDecrypt,net-crypto,high,raknet-spec.md
+0xa637a0,RakPeer_Send_common,net,med,raknet-spec.md#function-map

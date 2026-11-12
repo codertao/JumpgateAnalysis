@@ -111,7 +111,28 @@ static int apply_rules(unsigned char dir, unsigned char *msg, int len)
 }
 
 /* ---- forwarded exports ---- */
-__attribute__((naked)) void GetIP(void) { __asm__("jmp *%0" :: "m"(p_GetIP)); }
+/* GetIP(char *buf): the stock export writes the server IP string into buf -- the
+ * value of the DNS TXT record _game_server.jumpgate-tri.org, or "127.0.0.1" on
+ * failure. We override it when the SERVER_IP environment variable is set, so the
+ * client can be pointed at a local proxy / mock server without editing DNS or the
+ * hosts file. __cdecl, one argument, caller-cleaned (verified against the stock
+ * export body). Only a dotted IPv4 value (<=15 chars) is accepted, and the copy
+ * is bounded to 16 bytes so the game's fixed IP buffer cannot overflow; anything
+ * else falls through to the original DNS lookup. */
+typedef int (__cdecl *getip_fn)(char *buf);
+int __cdecl GetIP(char *buf)
+{
+    char env[32];
+    DWORD n = GetEnvironmentVariableA("SERVER_IP", env, sizeof env);
+    if (n > 0 && n <= 15) {
+        lstrcpynA(buf, env, 16);   /* <= 15 chars + NUL */
+        evt("GetIP: SERVER_IP override -> %s", buf);
+        return (int)n;
+    }
+    if (n >= sizeof env)
+        evt("GetIP: ignoring over-long SERVER_IP; using DNS");
+    return ((getip_fn)p_GetIP)(buf);
+}
 __attribute__((naked)) void Login(void) { __asm__("jmp *%0" :: "m"(p_Login)); }
 __attribute__((naked)) void Tick(void)  { __asm__("jmp *%0" :: "m"(p_Tick)); }
 
