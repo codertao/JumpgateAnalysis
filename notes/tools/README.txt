@@ -37,6 +37,17 @@ jg_static_dump.py  Jumpgate.exe [out.csv]
     needs only an objdump with PE/i386 support. Build-specific (checks SHA-256).
 extract_static_objects.py  (older, superseded by jg_static_dump.py)
 
+jg_tables.py  Jumpgate.exe [outdir]
+    Extract every hard-coded game table (~0.3 s):
+      ship_types.csv (0xa08440), ai_types.csv (0xa07240),
+      from init_item_tables 0x414460: engines, missiles, powerplants, radars,
+      ecms, shields, capacitors, devices (MODx/PCM/kits), cargo, and items.csv
+      (master id/category/name/description list incl. guns),
+      guns.csv (gun objects built by ctor 0xa60b90, pointers at 0x14e8474),
+      locations.csv (0x4a8d10: name, galaxy xyz, faction).
+    Unlabelled fields are emitted as oXX/fXX columns.
+    Needs objdump. Build-specific (checks SHA-256). See items.md, physics.md 5.
+
 jg_functions.py — function inventory / naming coverage
   python3 tools/jg_functions.py ../Jumpgate.exe        (from notes/; ~5 s)
   Reads function_names.csv (hand-curated: addr,name,area,confidence,ref),

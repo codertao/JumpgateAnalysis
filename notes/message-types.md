@@ -17,6 +17,9 @@ Common sub-fields seen across many messages:
 
 ## Client → server (confirmed by capture)
 
+> Which **server** (state 5150 vs space 5151) each C→S type goes to: see
+> network-protocol.md §1.1a. In short, positions/bots/shots/kills go to space and everything else to state.
+
 | Type | Len | Name / meaning | Layout (offsets in bytes) |
 |---|---|---|---|
 | 0x05 | 33 | **Login** | `[05]` + callsign`\0` + password`\0` + version ("2.0127") at +0x16. **Cleartext password.** |
@@ -60,8 +63,8 @@ volunteer, 0x9C event/query (sub = u16 @ off 8: 0xEC/0xED...), 0x9D vouch,
 | 0x78 | 150 | Empty object list at launch (sim) [inferred] | all zero |
 | 0x18 | 8 | Small status (medal?) | `[18][u32][ff 00 ff 01]` |
 | 0x8C | 7 | Small status | `[8C][cc cc cc][u16?]` |
-| 0x33 | 8 | smallloc — server relay of other ships' 0x33 [inferred] | `[33]...` |
-| 0x34 | 896 | miniloc — server relay / bulk table of other ships' positions [inferred] | `[34]...` |
+| 0x33 | var | smallloc relay: another ship's 0x33, same layout as C→S | handler `0x9d573c`. Matched by player id @0x18; dropped unless clock @0x34 is newer. Position @0x1c, velocity i16×0.1 @0x12. Error < 200 u is blended into velocity, otherwise snapped (physics.md §8) [static 2026-11-11] |
+| 0x34 | var | miniloc relay: another ship's 0x34, same layout as C→S | handler `0x9d5a9d`. id @0x14, position @0x18, clock @0x30. No velocity; same blend/snap rule [static 2026-11-11] |
 | 0x45 | — | rank | handler `0x9d662a` |
 | 0x8F | 896 | welcome / initial world state | `[8F]...` |
 
@@ -98,7 +101,7 @@ Client → server in space (also see reversing-map "Weapon hits & damage": C→S
 | Type | Len | Name | Layout / notes |
 |---|---|---|---|
 | 0x05 | 176 | **"gloc 3" full location/state report** (every 17th location tick: ~13.6 s idle, ~5 s while steering) | `[05][state@1][flags@2][salt@3]` + equipment/cargo slot array (`fe fe`=empty, same format as 0x06 char record) + callsign`\0` + … + **`f32 clock_s @100`** (session clock, seconds) + … + **`f32 X @144, Y @148, Z @152`** (ship position, sector coordinates) + fixed capacity consts after. Sent by `0x9cd410`; see "Location update path" below. [capture-verified 2026-11-10: track matches route, gates, mining spot] |
-| 0x33 | 56 | **"small loc" fast position update** (only when another ship is within 10,000 units) | `[33][flags@1][state@2][salt@3][u16 loc@4]` + 6×i16 orientation (fwd+up unit vectors ×10000) @6 + 3×i16 (×10, velocity/rotation rate [inferred]) @0x12 + `u32@0x18` + **f32 X/Y/Z @0x1c** + f32 throttle·speed @0x28 + f32 @0x2c, @0x30 + **f32 clock_s @0x34** [static] |
+| 0x33 | 56 | **"small loc" fast position update** (only when another ship is within 10,000 units) | `[33][flags@1][state@2][salt@3][u16 loc@4]` + 6×i16 orientation (fwd+up unit vectors ×10000) @6 + 3×i16 **velocity ×10** @0x12 [static, 2026-11-11: packed from snapshot `0xff2ad0..d8` × 10.0 @`0xb05ac8`] + `u32@0x18` + **f32 X/Y/Z @0x1c** + f32 throttle·speed @0x28 + f32 @0x2c, @0x30 + **f32 clock_s @0x34** [static] |
 | 0x34 | 52 | **"mini loc" fast position update** (alternates with 0x33, same gating) | same as 0x33 minus the three ×10 shorts: 6×i16 orientation @6, `u32@0x14`, **f32 X/Y/Z @0x18**, f32 @0x24/0x28/0x2c, **f32 clock_s @0x30** [static] |
 | 0x17 | 10 | Compact companion report (1:1 with 0x05; sent by `0x9cb330` right after it, on the *state* connection) | `[17]` + 9 bytes that change every send — compact heading/input or state-hash [inferred]. |
 | 0x71 | 52 | **Bot (conflux) state report "botloc"** — sent by the bot's controlling client | `[71][state][hull%][shield%][b][b][u16 id]…[u16 loc]` + i16 vel/orientation + `u32 player` + f32 pos. One per bot this client controls, after every 0x05; empty when you control none (so all-zero in the solo capture). See reversing-map "Conflux / bot AI". |
@@ -142,9 +145,9 @@ Client → server in space (also see reversing-map "Weapon hits & damage": C→S
 One sender, `0x9cd410` (strings "gloc 3", "small loc", "mini loc"), driven by a
 timer in `0x9ce1c0..0x9ce2f6`; all three types go on the **space** connection.
 - **Tick rate:** QueryPerformanceCounter (`0xbe5dc8`/freq `0xbe5dd8`). One tick
-  when >0.3 s have passed *and* a control triple (`*0x144094c/50/54`, likely
-  stick/throttle input [inferred]) moved by more than 1 since the last tick, otherwise
-  when >0.8 s have passed. Ship/state ids 249/250 (`0xff2a94`) tick every frame.
+  when >0.3 s have passed *and* the ship **position** (`*0x144094c/50/54`;
+  corrected 2026-11-11, see physics.md) moved by more than 1 unit since the last tick,
+  otherwise when >0.8 s have passed. Ship/state ids 249/250 (`0xff2a94`) tick every frame.
 - **Rotation:** the counter `0xbe5c18` cycles 2..18. Odd values send 0x33 small loc,
   even values send 0x34 mini loc, and 18 sends the 0x05 full report plus the 0x17
   companion, then resets. That makes 17 ticks per 0x05: 17 × 0.8 s ≈ **13.6 s** when
@@ -159,5 +162,6 @@ timer in `0x9ce1c0..0x9ce2f6`; all three types go on the **space** connection.
 - After every 100th 0x05 (`0xbe5c10`) with loc < 1000, also sends `0x75`
   "request asteroid" (4 B, state conn).
 - The 0x05/0x33/0x34 share one snapshot block at `0xff2a50..0xff2af0`:
-  orientation `0xff2ab8..cc`, rates `0xff2ad0..d8`, position `0xff2aac..b4`,
+  orientation `0xff2ab8..cc`, **velocity** `0xff2ad0..d8` (copied from the
+  velocity cells), position `0xff2aac..b4`,
   clock `0xff2aa0`.

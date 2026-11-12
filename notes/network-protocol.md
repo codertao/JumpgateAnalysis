@@ -33,6 +33,55 @@ UDP datagram
   high-entropy bytes → **RakNet AES is active** [capture]. A raw pcap therefore
   yields only sizes/timing; plaintext requires the in-process shim (see tools).
 
+### 1.1a Which server each message goes to  [static, 2026-11-12]
+The client has **one sender per connection**. Both of them obfuscate the payload and
+then call RakNet send:
+- `0x9c9c10` SendGameMessage → `0xa631d0` → conn `+0x08` = **state server (5150)**.
+  Buffer `0xba7ce8`, ordering channel 0.
+- `0x9c9c90` SendSpaceMessage → `0xa63200` → conn `+0x28` = **space server (5151)**.
+  Buffer `0xba84e8`. Takes a 4th argument, an ordering channel (forced to 0 if > 0x20).
+- 14 hot-path sends call `0xa631d0`/`0xa63200` directly (7 each), all inside `0x9c9d10..0x9cf206`.
+
+Of 293 send sites, 268 go to state (261 through the wrapper + 7 direct) and 25 go to
+space (18 + 7 direct).
+
+**→ space server:**
+- **Position:** 0x05 full "loc2/gloc" report (176 B, from `send_location_tick` and
+  `on_char_record`), 0x33 small loc (56), 0x34 mini loc (52), mloc (40, `0x9ca840`).
+- **Bots:** 0x71 botloc (52; all the "botloc N" sites, bot AI, damage handler), 0x2C
+  bot handoff "bxr".
+- **Combat:** 0x1D new-fired / hit queue (unreliable-sequenced, g=2), 0x1A mkill,
+  0x4D modx (one of the four sites: the PWD pulse `0x427af0`).
+- **Other:** 0xB0 (20 B; teleport, launch, bot AI), 0xA0 (launch), 0x8F welcome/ack
+  (1 B, `0x9cb4d0`).
+
+**→ state server:** everything else, including:
+- **Session/commands:** login, 0x07 dock/jump/launch, 0x09 commands, 0x17 companion
+  (10 B, sent right after each 0x05).
+- **Requests:** 0x75 (sent every 100th loc tick and on entering space), 0x8A weather,
+  0xA1 (enter space), 0x6A player list.
+- **Trade, chat and missions:** 0x4A/0x4C/0x4E…, 0x66/0x9C/0xC3 (the many-site
+  UI types), the other 0x4D modx and 0x8F sites, and all the other C→S types in
+  `captures/send_types.txt`.
+
+The split is clean. State is the persistent, reliable traffic: account, inventory,
+market, chat, missions, docking. Space is the real-time sector simulation:
+positions, bots, shots, kills, and in-space effects like PWD.
+
+**Receiving:** both sockets feed one queue. The poll loop `0xa62c10` compares the
+sender address with the state peer (`+0x08`). It then tags the queued packet
+`[pkt+0x10]` = 0 for state or 1 for space, and stamps that connection's last-heard
+time (`+0x18`/`+0x1c` for state, `+0x38`/`+0x3c` for space). Everything then goes
+through the single dispatcher `0x9cf6b0`. Whether any handler checks the tag
+hasn't been verified.
+
+**The capture doesn't have this.** The Msb32 shim hooks `catchPacket` (decode only)
+and encoder `0x9c8ca0`, below the point where the connection is chosen. So
+`timeline_sanitized.txt` has no state/space column. Two ways to add one:
+- For C→S, the source buffer tells you: `0xba7ce8` is state and `0xba84e8` is space.
+  The shim already sees it as the encoder's dst argument.
+- For S→C, hook `0xa62c10` or read `[pkt+0x10]`.
+
 ### 1.2 Server discovery  [static][capture]
 - `Msb32.dll!GetIP` resolves a **DNS TXT** record `_game_server.jumpgate-tri.org`;
   the TXT value is the server IP (was `217.194.148.37`). Fallback `127.0.0.1`.

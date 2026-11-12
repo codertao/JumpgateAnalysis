@@ -121,7 +121,8 @@ confirmed. Counts are `new` calls in each fn, so approximate.
   ≈ 400 units/s in straight lines between 13.7 s reports.
 
 ### Sector → region map (authoritative)  [static, 2026-11-10]  → `sector_regions.csv`
-- **Location names:** table at `0xfd9220 + id*100`, filled by `0x4a8d10`.
+- **Location names:** table at `0xfd9220 + id*100`, filled by `0x4a8d10` (also galaxy XYZ
+  +0x2c, faction +0x40; full layout in items.md → `locations.csv`).
   Stations and their surrounding space share a name (18 & 118 = Quantar Depot;
   8 & 108 = TriPoint-Station).
 - **Per-location object arrays:** `0xbef100 + id*0xff0`, 1000 pointer slots
@@ -196,7 +197,9 @@ Ownership moves to whichever player is nearest.
 | C→S `0x71` sub 3 | "botloc 3" — sent from the AI when a condition fires within 60 units [inferred: arrival/attack] |
 | C→S `0x2C` (12 B) "bxr" | handoff request: sent when a bot's controller is another player but **I** am closer to it (range scaled by ship radar) |
 | C→S `0xB0` (20 B) sub 3 | controller-only, 1-in-32000 rand per frame for ship types 230–233 within 1–200 units of the target: random event with client-rand payload [inferred: drop/spawn] |
-| `0x1042118 + slot*0x160c` | ship table: +0 active, +1 dead, **+2 controlling/target slot (0 = local, 0xfe = none)**, +3 0xff = valid, +0x94 distance, +0x15c8/+0x15cc hull, +0x15f8.. shields |
+| `0x1042118 + slot*0x160c` | ship table: +0 active, +1 dead, **+2 controlling/target slot (0 = local, 0xfe = none)**, +3 0xff = valid, +0x94 distance, +0x15f8.. shields. ⚠ An earlier version said "+0x15c8/+0x15cc hull"; physics.md shows +0x15c8/cc/d0 is the **position** (+0x15ec.. velocity, +0x15c0 mass). Hull offset to re-check. |
+
+See **ai.md** for the AI itself (state machine, skill table, turrets, missile guidance).
 
 Not verified: whether bot weapon fire and hit/damage resolution also run on
 the controlling client. Leads: missile update `0x42ca30` and hit processing
@@ -231,3 +234,34 @@ Flow:
   the 0x44 on death.
 - Open: whether a remote player's replayed gun shots also go through the victim's gun hit test
   (which would double-count with the 0x1D path). Probably not (class not 1) — not verified.
+
+## Flight physics  [static, 2026-11-11]  → full write-up in `physics.md`
+- Ship-type table loader `0xa08440`, item/engine table loader `0x414460` (both hard-coded;
+  `tools/jg_tables.py` → `ship_types.csv`, `engines.csv`; all other item tables → items.md).
+- Remote-ship network correction: the 0x05/0x33/0x34 relay handlers blend errors under 200 u into
+  velocity (+0.1·Δ) and snap larger ones. There is no separate displayed position. physics.md §8.
+- Ship vs ship: only a soft separation push (`0x410659`), no bounce or damage. The elastic bounce
+  is for slots 1–5 and the 1000-entry world-object table `0x140ad48 + i*0xdc`. physics.md §6.
+The own ship is simulated entirely client-side. Its state lives in 4-byte heap
+"cells" behind pointer globals `0x14408b0..0x1440954`, and they are
+**re-allocated in random order every frame** (`0x403740`). The flight code
+reaches them as `**(0xbdf578 + off)`, so plain xref searches miss it.
+
+| Addr | Role |
+|---|---|
+| `0x429bb0` | linear dynamics: thrust, quadratic drag (top speed = √(thrust/drag)), brakes, afterburner ×1.3, boost ×3, sector current |
+| `0x42a110` | attitude: yaw/pitch/roll = tan(√\|s\|·s·rate·dt), pitch/yaw × (1.6−throttle)·0.625; Auto-Dock autopilot; hazard/gate kill |
+| `0x9c7270` | `pos += v·dt`, publish own ship to contact slot 0 |
+| `0x40d630` | collisions (v = −0.8v + 5n, damage 0.1·m·v²), ship-ship elastic, gate pull, docking (speed < 100, < 60 u) |
+| `0x433010` | dead reckoning for remote ships (same thrust/drag law) |
+| `0x428290` | mass/thrust/rates from ship type + equipment + cargo + MODx |
+| `0xa1a700` | velocity checksum seal → `0xa215e0` shutdown ("Last Code" 0x3fd) on mismatch |
+| `0xff7eac + type*0x1e0` | ship-type table: +0x30 mass, +0x38 drag, +0x40/44/48 pitch/roll/yaw, +0x148 engines, +0x158.. extents |
+
+## Item / weapon tables  [static, 2026-11-12]  → full write-up in `items.md`
+- `init_item_tables` `0x414460`..`0x424e70`: global item ids 0–401, names `0x1481020+id*0x32`,
+  descriptions `0x148628c+id*0x1c2`, per-category records (missile `0x14fcbd4`, engine `0x146c878`,
+  powerplant `0x146ca28`, radar `0x146cb6c`, ECM `0x146ccac`, shield `0x146cd0c`, capacitor
+  `0x146cf64`, device `0x146d0b4`, cargo `0x146d2ee`).
+- Guns: `new(0xbd4)` + ctor `0xa60b90`, pointers `0x14e8474+g*4` (60 guns).
+- Market popup `0x44c7b0`, power budget `0x4680c0`; own loadout ids at `0x140ac0c..12`.
