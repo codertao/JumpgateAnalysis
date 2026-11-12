@@ -1,0 +1,67 @@
+# C->S message types recovered statically from the 260 SendGameMessage call sites.
+# columns: type  n_sites  lengths  guaranteed  subops  names(from error strings)
+
+0x07 n=4 len=12 g=1 subs=01,02,03 | Error Sending Dock Packet; Error Sending Jump Packet; Error Sending Launch Packet!
+0x08 n=2 len=8 g=1 subs=bc | Error Sending Ship Packet
+0x09 n=41 len=16 g=1 subs=00,01,03,04,05,07,08,0a,0b,0c,0d,0e,0f,10,5a,5b,5c | Error Sending Command Packet; Failed to assist Packet; Failed to empty Packet; Failed to list gm Packet; Failed to list ep Packet
+0x0c n=1 len=20 g=1 subs=fe | Failed to send impact packet
+0x0e n=1 len=16 g=1 subs= | Error Sending Consumables Update Packet
+0x0f n=13 len=392 g=1/eax/ebx subs=00,01 | Failed to send building packet
+0x10 n=1 len=3 g=1 subs=80 | Error Sending prodboost packet
+0x11 n=1 len=16 g=1 subs=11 | Error Sending Command Packet
+0x13 n=1 len=16 g=ebx subs=13 | Error Sending Command Packet
+0x16 n=3 len=6 g=1 subs= | Error Sending RejectSpawn Packet
+0x1b n=2 len=8 g=1 subs= | Error sending insurance update request
+0x2e n=1 len=8 g=1 subs=00 | Error Sending chkbldg packet
+0x36 n=3 len=13 g=1 subs=00 | Failed to send wingman packet; Failed to send wingman break packet
+0x37 n=1 len=20 g=1 subs=00 | Failed to send packet 55
+0x3d n=1 len=20 g=1 subs= | Failed to send Packet 61
+0x3f n=1 len=12 g=1 subs= | Failed to send packet 63
+0x40 n=1 len=12 g=1 subs= | Failed to send packet 64
+0x41 n=1 len=24 g=1 subs= | Failed to send packet 65
+0x43 n=1 len=12 g=1 subs=00 | Failed to send hits counter to server
+0x44 n=1 len=16 g=1 subs= | Failed to send who killed me to server
+0x4a n=6 len=20 g=1 subs=00,02,03,04,05 | Error Sending Tradeack Packet; Failed to send trade ack packet
+0x4c n=2 len=8 g=1 subs=00 | Error Sending Mission Packet; Failed to send mission packet
+0x4d n=3 len=12 g=1 subs= | Failed to send modx packet
+0x4e n=3 len=20 g=1 subs=00 | Error Sending Mentor Packet
+0x4f n=1 len=20 g=1 subs= | Error Sending teleportPacket
+0x59 n=1 len=8 g=1 subs=00 | Error Sending Home Packet
+0x63 n=1 len=1 g=1 subs= | 
+0x64 n=1 len=8 g=1 subs= | 
+0x66 n=37 len=12 g=1 subs=00 | 
+0x67 n=2 len=13 g=1 subs=00,02 | 
+0x6a n=3 len=8 g=1 subs= | Failed to send request player list packet; Failed to send player request packet; Failed to send mission packet
+0x6d n=1 len=8 g=1 subs= | 
+0x74 n=1 len=16 g=1 subs= | Failed to send update asteroid amount packet
+0x79 n=5 len=12 g=1/ebp subs= | Failed to send building packet
+0x7a n=1 len=20 g=1 subs= | Failed to send packet 122
+0x7b n=1 len=8 g=1 subs= | Error sending registry chg request
+0x83 n=1 len=8 g=1 subs= | Failed to send list channels packet
+0x8a n=2 len=1 g=1 subs= | Error Sending W.All.R. Packet!; Error Sending Weather Request Packet!
+0x8f n=1 len=1 g=1 subs= | 
+0x90 n=1 len=12 g=1 subs= | Failed to send findPOSowner packet
+0x91 n=1 len=16 g=1 subs= | Error Sending available Mission Packet
+0x93 n=1 len=8 g=1 subs= | Failed to send mode packet
+0x96 n=1 len=20 g=1 subs= | Failed to send volunteer Packet
+0x98 n=1 len=20 g=1 subs=00 | Failed to send refer Packet
+0x99 n=1 len=20 g=1 subs=00 | Failed to Packet 153
+0x9a n=1 len=20 g=1 subs=00 | Failed to Packet 154
+0x9b n=1 len=20 g=1 subs= | Failed to send volunteeroff Packet
+0x9c n=21 len=16/220/32/40 g=1 subs= | Error Sending warquery packet; Error Sending bldg info packet; Failed to send Packet 156; Error Sending puredist packet; Error Sending set event packet
+0x9d n=1 len=16 g=1 subs= | Error Sending vouch packet
+0xa8 n=1 len=72 g=ebx subs= | Network problem detected, unable to send pack
+0xaa n=1 len=20 g=ebx subs= | Error Sending Invite Packet.
+0xab n=1 len=20 g=ebx subs= | Error Sending Invite Packet.
+0xac n=1 len=20 g=1 subs= | Failed to send shipname Packet
+0xb1 n=4 len=12 g=1 subs=80,fe | Failed to send Packet
+0xb9 n=1 len=8 g=1 subs= | 
+0xba n=1 len=20 g=1 subs= | Failed to send packet UPDPRPACKET
+0xbb n=1 len=8 g=1 subs=00 | Error Sending Homeoff Packet
+0xc1 n=2 len=12 g=1 subs=0e | Failed to send job list request packet
+0xc3 n=12 len=2/36 g=1 subs=f2,f3,f4,f7,f8,f9,fb,fc,fd | Error sending insurance data request; Error Sending miltour packet; Error Sending Homewhere Packet; Error Sending oredepot packet
+0xc4 n=1 len=16 g=1 subs= | 
+0xc5 n=2 len=16/220 g=1 subs= | Error Sending Commission Packet; Error Sending Away Packet
+0xc6 n=1 len=12 g=1 subs= | 
+0xc8 n=3 len=8 g=1 subs= | Packets Sent While Online: %d
+0xe0 n=1 len=16 g=1 subs=7c | Error Sending Command Packet

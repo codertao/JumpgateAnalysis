@@ -1,0 +1,114 @@
+id,name,o00,size,mass
+222,Water,1,1,1000
+223,Grain,1,1,930
+224,Aluminum,1,1,2702
+225,Antimony,1,1,6684
+226,Barium,1,1,3510
+227,Boron,1,1,2340
+228,Cesium,1,1,1873
+229,Chromium,1,1,7190
+230,Copper,1,1,8960
+231,Cobalt,1,1,8900
+232,Erbium,1,1,8795
+233,Gallium,1,1,5907
+234,Germanium,1,1,5323
+235,Gold,1,1,19320
+236,Indium,1,1,7310
+237,Iridium,1,1,22500
+238,Iron,1,1,7860
+239,Lithium,1,1,530
+240,Magnesium,1,1,1738
+241,Molybdenum,1,1,10220
+242,Palladium,1,1,12020
+243,Phosphorus,1,1,1820
+244,Platinum,1,1,21450
+245,Plutonium,1,1,19840
+246,Radium,1,1,5000
+247,Silver,1,1,10500
+248,Silicon,1,1,2329
+249,Titanium,1,1,4540
+250,Uranium,1,1,18950
+251,Vanadium,1,1,5800
+252,Zinc,1,1,7130
+253,Organic Foods,1,1,450
+254,Manufactured Foods,1,1,450
+255,Medical Supplies,1,1,650
+256,Gemwoods,1,1,90
+257,RAM,1,1,650
+258,CPUs,1,1,650
+259,Electronics,1,1,650
+260,Fuel Cells,1,1,650
+261,Textiles,1,1,650
+262,Chemicals,1,1,650
+263,Construction Materials,1,1,650
+264,Prosthetics,1,1,650
+265,Helium,1,1,892
+266,Xenon,1,1,5897
+267,Nitrogen,1,1,1250
+268,Carbon,1,1,2620
+269,Laser Components,1,1,1300
+270,Explosives,1,1,4200
+271,Ammunition,1,1,8000
+272,Optics,1,1,1700
+273,Composites,1,1,1800
+274,Synthetics,1,1,5400
+275,Machined Parts,1,1,3800
+276,Magnetics,1,1,1780
+277,Gravitational Components,1,1,3600
+278,Natural Products,1,1,850
+279,RF Transceivers,1,1,710
+280,Armor,1,1,8200
+281,Fiber Optics,1,1,670
+282,Power Converters,1,1,2400
+283,Proximity Fuses,1,1,1800
+284,Octavia Light,1,1,1200
+285,PC-DSS1 'Poor',0,1,50
+286,PC-DSS2 'Poor',0,1,85
+287,PC-DSS3 'Poor',0,1,100
+288,PC-DSS4 'Poor',0,1,120
+289,PC-DSS1,0,1,50
+290,PC-DSS2,0,1,85
+291,PC-DSS3,0,1,100
+292,PC-DSS4,0,1,120
+293,PC-DSS1 'Rare',0,1,50
+294,PC-DSS2 'Rare',0,1,85
+295,PC-DSS3 'Rare',0,1,100
+296,PC-DSS4 'Rare',0,1,120
+297,PC-DSS1 'Perfect',0,1,50
+298,PC-DSS2 'Perfect',0,1,85
+299,PC-DSS3 'Perfect',0,1,100
+300,PC-DSS4 'Perfect',0,1,120
+301,PC-UC1,0,1,150
+302,PC-UC2,0,1,280
+303,PC-UC3,0,1,410
+304,PC-UC4,0,1,540
+305,PC-UC5,0,1,150
+306,PC-UC6,0,1,280
+307,PC-UC7,0,1,410
+308,PC-UC8,0,1,540
+309,PC-UC9,0,1,150
+310,PC-UC10,0,1,280
+311,PC-UC11,0,1,410
+312,PC-UC12,0,1,540
+313,PC-UC13,0,1,150
+314,PC-UC14,0,1,280
+315,PC-UC15,0,1,410
+316,PC-UC16,0,1,540
+317,Conflux Biomass,1,1,100
+318,Solrain Stout,1,1,1200
+319,Quanus Ice,1,1,1200
+320,Trap,1,1,2500
+372,X-0013-S,1,1,1000
+373,X-9450-C,1,1,50
+374,X-8821-L,1,1,1200
+375,X-3555-L,1,1,1200
+376,X-1901-L,1,1,1150
+377,X-4533-L,1,1,1300
+378,X-7770-L,1,1,950
+379,Recon Relay,1,1,650
+380,Passenger Cryopod,1,1,1000
+397,Common Metals,1,1,8000
+398,Radioactive Metals,1,1,8000
+399,Ice,1,1,4500
+400,Semifluxors,1,1,8000
+401,Precious Metals,1,1,8000

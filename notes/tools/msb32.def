@@ -1,0 +1,6 @@
+LIBRARY msb32.dll
+EXPORTS
+    GetIP
+    Login
+    Tick
+    catchPacket
