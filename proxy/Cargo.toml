@@ -1,0 +1,20 @@
+[package]
+name = "jumpgate-proxy"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Observing MitM/relay proxy for a Jumpgate client (own client, own traffic). Never intentionally alters game content."
+
+[[bin]]
+name = "jumpgate-proxy"
+path = "src/main.rs"
+
+[features]
+# Default build is the transparent relay (no crypto, zero external deps).
+# `mitm` pulls in the handshake/RSA to terminate both crypto halves.
+default = []
+mitm = ["raknet/mitm"]
+
+[dependencies]
+raknet = { path = "../raknet" }

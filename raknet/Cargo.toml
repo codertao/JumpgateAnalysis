@@ -1,0 +1,20 @@
+[package]
+name = "raknet"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "RakNet 2.x transport (as used by Jumpgate.exe): bitstream, AES DataBlockEncryptor, reliability datagram, SecuredConnection handshake."
+
+[features]
+# Core (bitstream, checksum, AES encryptor, reliability parse, game framing) has
+# zero external dependencies. `mitm` adds the RSA handshake needed to terminate
+# both crypto halves, which pulls in big-integer arithmetic.
+default = []
+mitm = ["dep:num-bigint", "dep:num-integer", "dep:num-traits", "dep:rand"]
+
+[dependencies]
+num-bigint = { version = "0.4.6", optional = true }
+num-integer = { version = "0.1.46", optional = true }
+num-traits = { version = "0.2.19", optional = true }
+rand = { version = "0.8.5", optional = true }
