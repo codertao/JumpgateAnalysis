@@ -21,6 +21,7 @@
 
 pub mod aes;
 pub mod bitstream;
+pub mod capture;
 pub mod checksum;
 pub mod crypto;
 pub mod game;
@@ -32,6 +33,8 @@ pub mod reliability;
 pub mod handshake;
 #[cfg(feature = "mitm")]
 pub mod rsa;
+#[cfg(feature = "mitm")]
+pub mod session;
 
 pub use bitstream::{BitReader, BitWriter};
 pub use crypto::{DataBlockEncryptor, DecryptError};

@@ -29,6 +29,8 @@ traffic.
   | `game` | 0x1A/0x51 framing + obfuscation | byte-verified (`0x9c8ca0`) |
   | `mt19937` | MT PRNG (reference only) | textbook; not on proxy path |
   | `rsa`/`handshake` (`mitm`) | SecuredConnection | structure verified; **RSA wire order needs live calibration** |
+  | `session` (`mitm`) | full RakNet peer (client+server roles) | loopback + real-UDP tested |
+  | `capture` | `jgcap.bin` reader | parsed; payloads never printed |
 
 - **`proxy`** (`jumpgate-proxy`) — the UDP relay / MitM. Default build is the
   transparent relay (no crypto, no external deps).
@@ -44,10 +46,14 @@ cargo run -p jumpgate-proxy --features mitm -- selftest
 
 ## Running the proxy
 
-Point your client's server lookup at the host running the proxy (the client
-resolves the server IP from the DNS TXT record `_game_server.jumpgate-tri.org`;
-override that via your hosts/DNS, or patch the Msb32 fallback). `--server` is the
-real server IP the proxy forwards to.
+Point your client at the host running the proxy by setting `SERVER_IP` before
+launch — the Msb32 shim's `GetIP` returns it instead of resolving the DNS TXT
+record `_game_server.jumpgate-tri.org` (see `../notes/tools/README.txt`). No
+hosts/DNS edits needed. `--server` is the real server IP the proxy forwards to.
+
+```sh
+SERVER_IP=<proxy-host-ip> Jumpgate.exe
+```
 
 ```sh
 # Transparent relay (default): observe + log, never modifies anything.
@@ -88,6 +94,36 @@ own keys (see spec §1.1a).
   Only the crypto envelope differs (fresh padding/nonce on re-encryption) and the
   handshake key material is substituted — both inherent to a decrypting proxy and
   neither alters game content. There are deliberately **no** content-edit hooks.
+
+## Mock server — the safest first test (no live server)
+
+Instead of touching the live server, replay a `jgcap.bin` capture to your own
+client with a mock server. It stands up the full stack (handshake → AES →
+reliability → framing) using `raknet::session` and plays back only the captured
+**server→client** messages (client→server records — which can hold a login — are
+ignored, and payloads are never printed).
+
+```sh
+# Serve a capture to a connecting client on the real ports.
+cargo run -p jumpgate-proxy --features mitm -- replay path/to/jgcap.bin --speed 1.0
+
+# Verify a mock server WITHOUT the game: a client built on the same library.
+cargo run -p jumpgate-proxy --features mitm -- probe <mock-server-ip> --count 3
+```
+
+`probe` connects as a client, completes the handshake, and prints the message
+types it receives — so you can confirm a mock server end-to-end before pointing
+the real client at it. The `replay`↔`probe` path is exercised as two real
+processes over UDP, and the in-crate tests cover it as a loopback
+(`session::tests`) and over real sockets (`raknet/tests/udp_replay.rs`).
+
+Caveat: completing the handshake with the **real game client** still depends on
+the RSA wire byte order (`raknet::rsa::WIRE_LITTLE_ENDIAN`, default little-endian)
+and on handshake framing details — both unverified against the real client. If
+the real client won't connect, flip that flag first; everything downstream is
+proven by the self-tests. Point the client at the mock server by launching it
+with `SERVER_IP=<mock-server-ip>` (the Msb32 shim's `GetIP` honours it; see
+`../notes/tools/README.txt`).
 
 ## Relation to the Msb32 shim
 

@@ -19,6 +19,8 @@
 mod connection;
 mod log;
 mod relay;
+#[cfg(feature = "mitm")]
+mod replay;
 
 use connection::{Handler, RawRelay};
 use log::Verbosity;
@@ -134,9 +136,20 @@ fn spawn(tag: &'static str, cfg: &Config, port: u16) -> thread::JoinHandle<()> {
 }
 
 fn main() {
-    if std::env::args().nth(1).as_deref() == Some("selftest") {
-        selftest::run();
-        return;
+    match std::env::args().nth(1).as_deref() {
+        Some("selftest") => {
+            selftest::run();
+            return;
+        }
+        Some("replay") => {
+            run_replay();
+            return;
+        }
+        Some("probe") => {
+            run_probe();
+            return;
+        }
+        _ => {}
     }
 
     let cfg = parse_args();
@@ -153,6 +166,133 @@ fn main() {
     let space = spawn("space", &cfg, cfg.space_port);
     let _ = state.join();
     let _ = space.join();
+}
+
+/// `replay <capture.bin> [--listen ip] [--state-port n] [--space-port n] [--speed f]`
+fn run_replay() {
+    #[cfg(not(feature = "mitm"))]
+    {
+        eprintln!("replay (mock server) needs `--features mitm` at build time.");
+        std::process::exit(2);
+    }
+    #[cfg(feature = "mitm")]
+    {
+        let mut args = std::env::args().skip(2);
+        let capture = args.next().unwrap_or_else(|| {
+            eprintln!("usage: jumpgate-proxy replay <capture.bin> [--listen ip] \
+                       [--state-port 5150] [--space-port 5151] [--speed 1.0]");
+            std::process::exit(2);
+        });
+        let mut listen: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
+        let mut state_port = 5150u16;
+        let mut space_port = 5151u16;
+        let mut speed = 1.0f32;
+        while let Some(a) = args.next() {
+            let mut val = || args.next().unwrap_or_else(|| usage());
+            match a.as_str() {
+                "--listen" => listen = val().parse().unwrap_or_else(|_| usage()),
+                "--state-port" => state_port = val().parse().unwrap_or_else(|_| usage()),
+                "--space-port" => space_port = val().parse().unwrap_or_else(|_| usage()),
+                "--speed" => speed = val().parse().unwrap_or_else(|_| usage()),
+                _ => usage(),
+            }
+        }
+        eprintln!(
+            "[warn] mock server is for testing YOUR OWN client with NO live server. \
+             Handshake RSA byte order is unverified against a real client (see \
+             notes/raknet-spec.md); flip raknet::rsa::WIRE_LITTLE_ENDIAN if it fails."
+        );
+        if let Err(e) = replay::run(&capture, listen, state_port, space_port, speed) {
+            eprintln!("[replay] error: {e}");
+            std::process::exit(1);
+        }
+    }
+}
+
+/// `probe <server-ip> [--state-port n] [--count n] [--timeout secs]`
+/// A client (built on the session endpoint) that connects to a mock server and
+/// reports the message types it receives. Verifies a mock server without the
+/// game client. Feature `mitm`.
+fn run_probe() {
+    #[cfg(not(feature = "mitm"))]
+    {
+        eprintln!("probe needs `--features mitm` at build time.");
+        std::process::exit(2);
+    }
+    #[cfg(feature = "mitm")]
+    {
+        use raknet::session::{Endpoint, Event};
+        use std::net::UdpSocket;
+        use std::time::{Duration, Instant};
+
+        let mut args = std::env::args().skip(2);
+        let server_ip = args.next().unwrap_or_else(|| {
+            eprintln!("usage: jumpgate-proxy probe <server-ip> [--state-port 5150] \
+                       [--count N] [--timeout secs]");
+            std::process::exit(2);
+        });
+        let mut port = 5150u16;
+        let mut want = 0usize; // 0 = until timeout
+        let mut timeout = 5u64;
+        while let Some(a) = args.next() {
+            let mut val = || args.next().unwrap_or_else(|| usage());
+            match a.as_str() {
+                "--state-port" => port = val().parse().unwrap_or_else(|_| usage()),
+                "--count" => want = val().parse().unwrap_or_else(|_| usage()),
+                "--timeout" => timeout = val().parse().unwrap_or_else(|_| usage()),
+                _ => usage(),
+            }
+        }
+        let addr: SocketAddr = format!("{server_ip}:{port}").parse().unwrap_or_else(|_| usage());
+        let sock = UdpSocket::bind(("0.0.0.0", 0)).expect("bind");
+        sock.connect(addr).expect("connect");
+        sock.set_read_timeout(Some(Duration::from_millis(50))).unwrap();
+
+        let mut ep = Endpoint::client();
+        for dg in ep.start() {
+            let _ = sock.send(&dg);
+        }
+        eprintln!("[probe] connecting to {addr}…");
+
+        let mut buf = [0u8; 2048];
+        let mut received = 0usize;
+        let deadline = Instant::now() + Duration::from_secs(timeout);
+        let mut connected_logged = false;
+        while Instant::now() < deadline {
+            if let Ok(n) = sock.recv(&mut buf) {
+                for ev in ep.recv(&buf[..n]) {
+                    match ev {
+                        Event::Connected => {
+                            if !connected_logged {
+                                eprintln!("[probe] handshake complete ✓");
+                                connected_logged = true;
+                            }
+                        }
+                        Event::Message(m) => {
+                            received += 1;
+                            println!(
+                                "[probe] msg #{received} type=0x{:02x} ts={:?} ({}B)",
+                                m.message_type().unwrap_or(0),
+                                m.timestamp,
+                                m.body.len()
+                            );
+                        }
+                    }
+                }
+                for dg in ep.flush() {
+                    let _ = sock.send(&dg);
+                }
+            }
+            if want != 0 && received >= want {
+                break;
+            }
+        }
+        eprintln!(
+            "[probe] done: connected={} messages={received}",
+            ep.is_connected()
+        );
+        std::process::exit(if ep.is_connected() { 0 } else { 1 });
+    }
 }
 
 /// In-process end-to-end checks that need no network.
